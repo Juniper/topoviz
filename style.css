@@ -1,0 +1,217 @@
+* {
+  box-sizing: border-box;
+}
+.main-header {
+   height: 55px;
+   width: 100%;
+}
+#hero3 {
+    background-image: url("images/logo.svg");
+    z-index: 3;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    background-position: center;
+    background-size: contain;
+    display: block;
+    height: 55px;
+    width: 150px;
+    background-repeat: no-repeat;
+}
+#hero2 {
+    background-image: url("images/hero_blank.png");
+    z-index: 2;
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    z-index: 2;
+    height: 55px;
+    width: 900px;
+    background-repeat: no-repeat;
+}
+#hero1 {
+   background-image: url("images/hero_crop.png");
+   z-index: 1;
+   position: absolute;
+   left: 0px;
+   top: 0px;
+   height: 55px;
+   width: 100%;
+   background-repeat: repeat;
+}
+
+#breadcrumb {                                                                   
+    background-color: #f0f0ff;                                                  
+}  
+#appheader {                                                                    
+    background-color: #f0f0ff;                                                  
+}         
+
+h1 {
+    margin: 5px;
+}
+h2 {
+    margin: 5px;
+}
+html {
+   height: 100%;
+}
+body {
+    margin: 0;
+    font-size: 12px;
+    font-family: arial,sans-serif;
+    height: 100%;
+}
+.left {
+    float: left;
+    overflow: hidden;
+    display: inline-block; /* Necessary to trigger "hasLayout" in IE */
+    display: block; /* Sets element back to block */
+}
+.right {
+    float: right;
+}
+.clear {
+    clear: both;
+}
+.seperator {
+    background-color: #fff;
+    border-top: 1px solid #dedede;
+    height: 1px;
+    padding-bottom: 12px;
+}
+
+#content_wrapper {
+    height: calc(100% - 55px - 15px - 39px - 13px);
+    width: 100%;
+}
+
+#sidebar {
+    min-height: 100%;
+    max-height: 100%;
+    width: 240px;
+}
+
+.circle {
+  stroke-width: 1.5px;
+}
+
+.link-line {
+  stroke: #999;
+  fill: none;
+  stroke-width: 1.5px;
+}
+
+.link-label {
+  fill-opacity: 1;
+}
+
+input[type="text"] {
+  width: 185px;
+  height: 20px;
+  border: 1px inset;
+  padding-left: 0px;
+  padding-right: 0px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  margin: 0px;
+}
+textarea {
+  display: block;
+  width: 185px;
+  height: 20px;
+  border: 1px inset;
+  padding-left: 0px;
+  padding-right: 0px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  margin: 0px;
+}
+
+#txtinput {
+  padding-top: 2px;
+  display: inline-block;
+}
+
+text {
+  font: 10px sans-serif;
+  pointer-events: none;
+  text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+}
+
+.mid {
+  display: inline;
+  vertical-align: 22.5%;
+}
+
+.bot {
+  display: inline;
+  vertical-align: -12.5%;
+}
+
+#svgcontainer {
+  width: calc(100% - 240px);
+  height: 100%;
+}
+
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+.modal_overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 10;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal {
+    width: 500px;
+    height: 190px;
+    position: fixed;
+    top: calc(50% - 95px); 
+    left: calc(50% - 250px);
+    background-color: #ffffff;
+    border-radius: 5px;
+    text-align: left;
+    padding: 5px;
+    z-index: 11;
+}
+
+#infopanel {
+    white-space: nowrap;
+    padding-left: 10px;
+}
+
+#key {
+    width: 240px;
+    padding: 0px;
+}
+
+.key {
+    width: 238px;
+    height: 360px;
+    padding: 0px;
+}
+
+.keytext {
+    font-size: 12px;
+}
+
+#search {
+    width: 240px;
+    padding-left: 10px;
+}
+
+.ul {
+    padding-left: 10px;
+}
+
+#lsp_trace_div {
+    width: 240px;
+    padding-left: 10px;
+}
