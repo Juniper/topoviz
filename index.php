@@ -1351,7 +1351,7 @@ function _throw_error(txt) {
       <div id="import_json_tab">
           </br></br>
           <fieldset>
-              <legend>Select XML file</legend>
+              <legend>Select previously exported topoviz JSON file</legend>
               <div class=import_json_db_upload></div>
           </fieldset>
           </br></br></br></br></br></br></br></br>
