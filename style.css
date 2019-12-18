@@ -40,12 +40,12 @@
    background-repeat: repeat;
 }
 
-#breadcrumb {                                                                   
-    background-color: #f0f0ff;                                                  
-}  
-#appheader {                                                                    
-    background-color: #f0f0ff;                                                  
-}         
+#breadcrumb {
+    background-color: #f0f0ff;
+}
+#appheader {
+    background-color: #f0f0ff;
+}
 
 h1 {
     margin: 5px;
@@ -170,16 +170,18 @@ text {
 }
 
 .modal {
-    width: 500px;
-    height: 190px;
-    position: fixed;
-    top: calc(50% - 95px); 
-    left: calc(50% - 250px);
+    position: absolute;
+    top: calc(50%);
+    left: calc(50%);
     background-color: #ffffff;
     border-radius: 5px;
     text-align: left;
-    padding: 5px;
     z-index: 11;
+    transform: translate(-50%,-50%)
+}
+
+#tabs {
+    width:655px;
 }
 
 #infopanel {
