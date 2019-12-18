@@ -24,56 +24,53 @@ LICENSE.
         crossorigin="anonymous">
     </script>
     <link type="text/css" rel=stylesheet href="style.css"></link>
-
     <script>
     $(document).ready(function () {
-
-        /* to enable dialog box at start for ospf/isis input */
-        $(".ospf_text").hide();
-        $(".isis_text").hide();
-        $(".ted_text").hide();
-        $(".common_text").hide();
-        $(".hosts_file").hide();
-        $(".import_json_text").hide();
-        $("#p1").click(function () {
-            $(".isis_text").hide();
-            $(".ted_text").hide();
-            $(".common_text").show();
-            $(".ospf_text").show();
-            $(".hosts_file").show();
-            $(".import_json_text").hide();
-            document.getElementById("modal").style.height="230px";
+        $("button").button();
+        $(".submitBtn").click(function(){
+            $("#input").submit();
         });
-        $("#p2").click(function () {
-            $(".ospf_text").hide();
-            $(".ted_text").hide();
-            $(".common_text").show();
-            $(".isis_text").show();
-            $(".hosts_file").hide();
-            $(".import_json_text").hide();
-            document.getElementById("modal").style.height="230px";
+        $( "input[type='radio']" ).checkboxradio();
+        $("#tabs").tabs({heightStyle: "auto"});
+        $(".ospf_tab").click(function () {
+            $('.upload').remove();
+            $('.ospf_db_upload').append(
+                $('<input/>').attr('class','upload').attr('type','file').attr('name','db_file'),
+                $('<input/>').attr('class','upload').attr('type','hidden').attr('name','ospf').attr('value','True'),
+            );
+            $('.ospf_host_upload').append(
+                $('<input/>').attr('class','upload').attr('type','file').attr('name','host_file')
+            );
         });
-        $("#p3").click(function () {
-            $(".ospf_text").hide();
-            $(".common_text").show();
-            $(".isis_text").hide();
-            $(".ted_text").show();
-            $(".hosts_file").show();
-            $(".import_json_text").hide();
-            document.getElementById("modal").style.height="230px";
+        $(".isis_tab").click(function () {
+            $('.upload').remove();
+            $('.isis_db_upload').append(
+                $('<input/>').attr('class','upload').attr('type','file').attr('name','db_file'),
+                $('<input/>').attr('class','upload').attr('type','hidden').attr('name','isis').attr('value','True'),
+            );
+            $('.isis_host_upload').append(
+                $('<input/>').attr('class','upload').attr('type','file').attr('name','host_file')
+            );
         });
-       $("#p4").click(function () {
-            $(".ospf_text").hide();
-            $(".common_text").show();
-            $(".isis_text").hide();
-            $(".ted_text").hide();
-            $(".hosts_file").hide();
-            $(".import_json_text").show();
-            document.getElementById("modal").style.height="140px";
+        $(".ted_tab").click(function () {
+            $('.upload').remove();
+            $('.ted_db_upload').append(
+                $('<input/>').attr('class','upload').attr('type','file').attr('name','db_file'),
+                $('<input/>').attr('class','upload').attr('type','hidden').attr('name','ted').attr('value','True'),
+            );
+            $('.ted_host_upload').append(
+                $('<input/>').attr('class','upload').attr('type','file').attr('name','host_file')
+            );
+        });
+        $(".import_json_tab").click(function () {
+            $('.upload').remove();
+            $('.import_json_db_upload').append(
+                $('<input/>').attr('class','upload').attr('type','file').attr('name','db_file'),
+                $('<input/>').attr('class','upload').attr('type','hidden').attr('name','import_json').attr('value','True'),
+            );
         });
     });
     </script>
-
 </head>
 <body>
 
@@ -171,7 +168,7 @@ function _gettopo() {
             .charge(-100)
             .linkDistance(30)
             .size([w, h]);
-    }   
+    }
 
     var drag = force.drag()
         .on("dragstart", _dragstart);
@@ -221,14 +218,14 @@ function _gettopo() {
         .append("g")
         .attr("class", "node")
         .call(drag)
-        .on("dblclick", _dblclick)    
+        .on("dblclick", _dblclick)
         .on("mouseover", _fade(.1))
         .on("mouseout", _fade(1));
 
         node.append("circle")
-            .attr('class', function(d) { return "circle_" + d.id; }) 
+            .attr('class', function(d) { return "circle_" + d.id; })
             .style("fill", function(d) {
-                if (d.group == "0"){  /* ospf non-abr non-asbr */ 
+                if (d.group == "0"){  /* ospf non-abr non-asbr */
                     return fill_0;
                 } else if (d.group == "1"){   /* ospf abr */
                     return fill_1;
@@ -242,9 +239,9 @@ function _gettopo() {
                     return fill_5;
                 } else if (d.group == "6"){  /* ospf p2mp link */
                     return fill_6;
-                } else if (d.group == "11"){  /* isis L1 subnet */ 
+                } else if (d.group == "11"){  /* isis L1 subnet */
                     return fill_11;
-                } else if (d.group == "12"){  /* isis L2 subnet */ 
+                } else if (d.group == "12"){  /* isis L2 subnet */
                     return fill_12;
                 } else if (d.group == "13"){   /* isis L1/L2 subnet */
                     return fill_13;
@@ -258,7 +255,7 @@ function _gettopo() {
             })
             .attr("r", r - .75)
             .style("stroke", function(d) {
-                if (d.group == "0"){  /* ospf non-abr non-asbr */ 
+                if (d.group == "0"){  /* ospf non-abr non-asbr */
                     return stroke_0;
                 } else if (d.group == "1"){   /* ospf abr */
                     return stroke_1;
@@ -272,9 +269,9 @@ function _gettopo() {
                     return stroke_5;
                 } else if (d.group == "6"){  /* ospf p2mp link*/
                     return stroke_6;
-                } else if (d.group == "11"){  /* isis L1 subnet */ 
+                } else if (d.group == "11"){  /* isis L1 subnet */
                     return stroke_11;
-                } else if (d.group == "12"){  /* isis L2 subnet */ 
+                } else if (d.group == "12"){  /* isis L2 subnet */
                     return stroke_12;
                 } else if (d.group == "13"){   /* isis L1/L2 subnet */
                     return stroke_13;
@@ -533,7 +530,7 @@ function _gettopo() {
     function _zoom() {
         svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
     }
-  
+
     function _traceon() {
 
         var ingress_lsp = document.getElementById('lsp_trace').value;
@@ -557,7 +554,7 @@ function _gettopo() {
         var inv_router_and_subnet_array=[];
         var inv_link_array=[];
         var subnets_connected_to_both=[];
-   
+
 
         function _ip_to_binary_string(ip){
             var split = ip.split(/\./);
@@ -572,17 +569,17 @@ function _gettopo() {
             }
             return binarystring;
         }
- 
+
         for(var i=0; i < path_list.length; i++){
 
             // create binary string representing each ip in the path list
             ip = path_list[i];
             var binarystring = _ip_to_binary_string(ip);
             path_list_binary.push(binarystring);
-            
+
             // first we need to identify the indexes of each node in the list
             // invert search order as routers are at the bottom of nodes array
-    
+
             for (var n = (json.nodes.length-1); n >= 0; n--) {
                 var router = json.nodes[n];
                 if (router.group !== 20 && router.group !== 30 && router.group > 3) {
@@ -646,11 +643,11 @@ function _gettopo() {
                 }
             }
         }
-    
+
         //
         // this method selects all .nodes, filters the ones we want and returns an array
         // then uses .each to call a function for each entry in the list
-        // 
+        //
         // var update = d3.selectAll(".node")
         //    .filter(function(d) { return router_array.indexOf((d.id)) > -1})
         //    .each(function (d) {
@@ -672,7 +669,7 @@ function _gettopo() {
             .each(function (d) {
                 a = d;
             });
-    
+
         for(var i=1; i < router_array.length; i++){
             var lsr = '.circle_' + router_array[i];
             var update = d3.select(lsr)
@@ -681,7 +678,7 @@ function _gettopo() {
                    a = d;
                });
         }
-    
+
         function _lsp_join(link_array, subnet_array, a, b) {
             // problem here is that each router only connects to subnets.
             // need to either pass in array that includes the subnets
@@ -691,7 +688,7 @@ function _gettopo() {
             var link_array_a=[];
             var link_array_b=[];
             var subnets_connected_to_both=[];
-    
+
             // linkedbyindex is a list of node to node connections
             for (var entry in linkedbyindex) {
                 var re_a = new RegExp(a.index + ",[0-9]+");
@@ -726,7 +723,7 @@ function _gettopo() {
                 }
             }
 
-            // if there are multiple links between 'a' and 'b' then try to isolate 
+            // if there are multiple links between 'a' and 'b' then try to isolate
             // which subnet is a match to the ip in the RRO list
             if(subnets_connected_to_both.length == 1) {
                 subnet_array.push(subnets_connected_to_both[0]);
@@ -758,7 +755,7 @@ function _gettopo() {
                 }
             }
         }
- 
+
         //join these two arrays so we can act on it once
         router_and_subnet_array = router_array.concat(subnet_array);
         // need to invert the arrays in order to filter correctly
@@ -802,7 +799,7 @@ function _gettopo() {
             .filter(function(d) { return subnet_array.indexOf((d.id)) > -1})
             .on('mouseout', _show_label(0))
             .on('mouseover',_show_label(1));
-  
+
         var shade_links = d3.selectAll(".link-line")
             .filter(function(d) { return inv_link_array.indexOf((d.id)) > -1})
             .on("mouseover", null)
@@ -849,11 +846,11 @@ function _gettopo() {
     _gettopo._traceoff = _traceoff;
 
     function _search() {
-    
+
         var findme = document.getElementById("search_box").value;
-    
+
         var nodes = json.nodes;
-    
+
         for (var i = 0; i < nodes.length; i++) {
             var counter = nodes[i];
             if (counter.name == "" + findme || counter.router_id == "" + findme) {
@@ -868,10 +865,10 @@ function _gettopo() {
                 .attr("r", "5")
                 return;
             }
-    
-            // ospf only 
+
+            // ospf only
             if (counter.group == 0 || counter.group == 1 || counter.group == 2 || counter.group == 3) {
-    
+
                 counter2 = counter.loopbacks;
                 for (var k = 0; k < counter2.length; k++) {
                     if (counter2[k].address == "" + findme) {
@@ -885,9 +882,9 @@ function _gettopo() {
                         .transition()
                         .attr("r", "5")
                         return;
-                    }  
+                    }
                 }
-    
+
                 counter2 = counter.p2p;
                 for (var k = 0; k < counter2.length; k++) {
                     if (counter2[k].p2p_subnet == "" + findme) {
@@ -901,9 +898,9 @@ function _gettopo() {
                         .transition()
                         .attr("r", "5")
                         return;
-                    }  
+                    }
                 }
-    
+
                 counter2 = counter.bcast_local_addresses;
                 for (var k = 0; k < counter2.length; k++) {
                     if (counter2[k].bcast_local_address == "" + findme) {
@@ -919,7 +916,7 @@ function _gettopo() {
                         return;
                     }
                 }
-    
+
                 counter2 = counter.p2mp_p2p_local_addresses;
                 for (var k = 0; k < counter2.length; k++) {
                     if (counter2[k].local_address == "" + findme) {
@@ -935,10 +932,10 @@ function _gettopo() {
                         return;
                     }
                 }
-    
+
             // isis only
             } else if (counter.group == 20) {
-    
+
                 counter2 = counter.l1loopbacks;
                 for (var k = 0; k < counter2.length; k++) {
                     if (counter2[k].address == "" + findme) {
@@ -952,9 +949,9 @@ function _gettopo() {
                         .transition()
                         .attr("r", "5")
                         return;
-                    }  
+                    }
                 }
-    
+
                 counter2 = counter.l2loopbacks;
                 for (var k = 0; k < counter2.length; k++) {
                     if (counter2[k].address == "" + findme) {
@@ -968,9 +965,9 @@ function _gettopo() {
                         .transition()
                         .attr("r", "5")
                         return;
-                    }  
+                    }
                 }
-    
+
                 counter2 = counter.local_ips;
                 for (var k = 0; k < counter2.length; k++) {
                     if (counter2[k].address == "" + findme) {
@@ -984,10 +981,10 @@ function _gettopo() {
                         .transition()
                         .attr("r", "5")
                         return;
-                    }  
+                    }
                 }
             } else if (counter.group == 30) {
-    
+
                 counter2 = counter.links;
                 for (var k = 0; k < counter2.length; k++) {
                     if (counter2[k].local_address == "" + findme) {
@@ -1001,7 +998,7 @@ function _gettopo() {
                         .transition()
                         .attr("r", "5")
                         return;
-                    }  
+                    }
                 }
             }
         }
@@ -1010,15 +1007,15 @@ function _gettopo() {
     _gettopo._search = _search;
 
     function _download(file) {
-        
+
         // because of the way d3 stores data inside json.links array
-        // we have to create a new object that contains only 
+        // we have to create a new object that contains only
         // the data required for a successful import.
         var new_json = {'protocol': proto,nodes:[],links:[]};
-    
+
         // the nodes array is ok, we can just copy this from the json object
         new_json.nodes = json.nodes;
-    
+
         // pull the relevant info from the json.links array
         var i;
         for (i=0;i<json.links.length;i++){
@@ -1027,14 +1024,14 @@ function _gettopo() {
                                      'target': json.links[i].target.index,
                                      'metric': json.links[i].metric,
                                      'id': json.links[i].id });
-    
+
             } else if (proto === "isis") {
                 new_json.links.push({'source': json.links[i].source.index,
                                      'target': json.links[i].target.index,
                                      'level': json.links[i].level,
                                      'metric': json.links[i].metric,
                                      'id': json.links[i].id });
-    
+
             } else if (proto === "ted") {
                 new_json.links.push({'source': json.links[i].source.index,
                                      'target': json.links[i].target.index,
@@ -1045,24 +1042,24 @@ function _gettopo() {
                                      'id': json.links[i].id });
             }
         }
-    
+
         // convert new object into json
         var json_out = JSON.stringify(new_json, null, '  ');
-    
+
         // create element that contains the hyperlink to the json string
         var a = window.document.createElement('a');
         a.href = window.URL.createObjectURL(new Blob([json_out], {type: 'application/json'}));
         a.download = file+'.json';
-    
+
         // Append anchor to body.
         document.body.appendChild(a)
-    
+
         // trigger the download
         a.click();
-    
+
         // Remove anchor from body
         document.body.removeChild(a)
-    
+
     }
 
     _gettopo._download = _download;
@@ -1071,7 +1068,7 @@ function _gettopo() {
 
 }
 
- 
+
 function _throw_error(txt) {
 
     // create a modal with the error string
@@ -1085,36 +1082,36 @@ function _throw_error(txt) {
 </script>
 <?php
 
-    // define vars before using them 
+    // define vars before using them
     $file = '';
     $proto = '';
     $dl = '';
     $opt = '';
     $showDivFlag = '';
 
-    if (isset($_POST['Submit1'])) {
-        $showDivFlag = false;
-        if($_POST['protocol']) {
-            $proto = $_POST['protocol'];
-        }
-        if($_POST['opt']) {
-            $opt = $_POST['opt'];
-        }
-    }
-
     // call out to js to create a modal with the error
     function _error_out($errstr) {
         echo "<script>var txt='$errstr'; _throw_error(txt)</script>";
-        exit;                                                                      
+        exit;
     }
 
     if($_SERVER["REQUEST_METHOD"] == "POST"){
-        $cwd = "/var/www/html/topoviz";
+        $showDivFlag = false;
+        if (isset($_POST['ospf'])) {
+            $proto = "ospf";
+        } elseif (isset($_POST['isis'])) {
+            $proto = "isis";
+            $opt = $_POST['opt'];
+        } elseif (isset($_POST['ted'])) {
+            $proto = "ted";
+        } elseif (isset($_POST['import_json'])) {
+            $proto = "import_json";
+        }
         // Check if file was uploaded without errors
-        if(is_uploaded_file($_FILES["input_files"]["tmp_name"][0])) {
-            if ($_FILES["input_files"]["error"][0] == 0) {
-                $input_db_file = $_FILES["input_files"]["name"][0];
-                $tmpfile = $_FILES["input_files"]["tmp_name"][0];
+       if(is_uploaded_file($_FILES["db_file"]["tmp_name"])) {
+           if ($_FILES["db_file"]["error"] == 0) {
+                $input_db_file = $_FILES["db_file"]["name"];
+                $tmpfile = $_FILES["db_file"]["tmp_name"];
             } else {
                 _error_out("an error occurred during upload of xml file");
             }
@@ -1122,17 +1119,17 @@ function _throw_error(txt) {
             $file = "json/$input_db_file-$t";
             $dl = "$input_db_file-$t";
             if ($proto == 'ospf') {
-                $status = shell_exec("cat $tmpfile | perl $cwd/d3-ospf-topo.pl > $cwd/$file; echo $?" );
+                $status = shell_exec("cat $tmpfile | perl d3-ospf-topo.pl > $file; echo $?" );
                 if($status == 254) {
                     _error_out("Input file is not XML formatted");
                 }
             } elseif ($proto == 'isis') {
-                $status = shell_exec("cat $tmpfile | perl $cwd/d3-isis-topo.pl $opt > $cwd/$file; echo $?");
+                $status = shell_exec("cat $tmpfile | perl d3-isis-topo.pl $opt > $file; echo $?");
                 if($status == 254) {
                     _error_out("Input file is not XML formatted");
-                } 
+                }
             } elseif ($proto == 'ted') {
-                $status = shell_exec("cat $tmpfile | perl $cwd/d3-ted-topo.pl > $cwd/$file; echo $?" );
+                $status = shell_exec("cat $tmpfile | perl d3-ted-topo.pl > $file; echo $?" );
                 if($status == 254) {
                     _error_out("Input file is not XML formatted");
                 }
@@ -1156,17 +1153,16 @@ function _throw_error(txt) {
         }
 
         // Check if file was uploaded without errors
-        if(is_uploaded_file($_FILES["input_files"]["tmp_name"][1])) {
-            if ($_FILES["input_files"]["error"][1] == 0) {
-                $input_host_file = $_FILES["input_files"]["name"][1];
-                $tmpfile = $_FILES["input_files"]["tmp_name"][1];
+        if(is_uploaded_file($_FILES["host_file"]["tmp_name"])) {
+            if ($_FILES["host_file"]["error"] == 0) {
+                $tmpfile = $_FILES["host_file"]["tmp_name"];
             } else {
                 _error_out("an error occurred during upload of hosts file");
             }
             if ($proto == 'ospf') {
-                shell_exec("cat $tmpfile | perl $cwd/host_replace_ospf.pl $cwd/$file");
+                shell_exec("cat $tmpfile | perl host_replace_ospf.pl $file");
             } elseif ($proto == 'ted') {
-                shell_exec("cat $tmpfile | perl $cwd/host_replace_ted.pl $cwd/$file");
+                shell_exec("cat $tmpfile | perl /host_replace_ted.pl $file");
             }
         }
     }
@@ -1197,7 +1193,7 @@ function _throw_error(txt) {
 
     <!-- side bar div, used for setting attributes etc -->
 
-    <div id=sidebar class=left> 
+    <div id=sidebar class=left>
         <h3>Info</h3>
         <div id=infopanel><span>To zoom:</br><ul><li>mousewheel</li><li>pinch/expand</li><li>2 finger drag up/down</li></ul>Click on a router to:<ul><li>list its details in info pane</li></ul>Mouseover a router to:<ul><li>highlight connected nodes</li></ul>Drag any node to:<ul><li>fix its position</li></ul>Double click a fixed node to:<ul><li>release it</li></ul>Mouseover a link to:<ul><li>show its metric</li></ul></span></div>
         <h3>Color Key</h3>
@@ -1220,7 +1216,7 @@ function _throw_error(txt) {
                         <circle cx="40" cy="340" r="15" stroke="#33ff77" stroke-width="2" fill="#99ffbb" />
                         <text class=keytext x="50"y="340" dx="20" dy="5">P2MP Segment</text>
                     </g>
-                </svg> 
+                </svg>
             </div>
             <div id=isis_key class=key <?php if ($proto == 'ospf' || $proto == 'ted'){?>style="display:none"<?php } ?>>
                 <svg height=100% width=100%>
@@ -1292,50 +1288,76 @@ function _throw_error(txt) {
 <div id="modal_overlay" class="modal_overlay" <?php if ($showDivFlag===false){?>style="display:none"<?php } ?>></div>
 <div id="modal" class="modal" <?php if ($showDivFlag===false){?>style="display:none"<?php } ?>>
     <form action="index.php" method="POST" id="input" enctype="multipart/form-data">
-        <input type=radio name='protocol' id=p1 value='ospf'>OSPF
-        <input type=radio name='protocol' id=p2 value='isis'>ISIS
-        <input type=radio name='protocol' id=p3 value='ted'>TED
-        <input type=radio name='protocol' id=p4 value='import_json'>IMPORT JSON
-        <div class=ospf_text>
-            </br>Save the db to a file:</br>
-            <b>"show ospf database router extensive | display xml | no-more | save #####"</b></br>
-            <h3>Select XML file</h3>
-        </div>
-        <div class=isis_text>
-            </br>Save the db to a file:</br>
-            <b>"show isis database extensive | display xml | no-more | save #####"</b></br>
-            Because isis db's can be many MB's in size, it can take a couple of minutes to render</br>
-            <h3>Select XML file</h3>
-        </div>
-        <div class=ted_text>
-            </br>Save the db to a file:</br>
-            <b>"show ted database extensive | display xml | no-more | save #####"</b></br>
-            <h3>Select XML file</h3>
-        </div>
-        <div class=import_json_text>
-	    <h3>Select an exported Topoviz json file</h3>
-        </div>
-	<div class=common_text>
-            <label for="fileSelect">Filename:</label>
-            <input type="file" name="input_files[]" multiple="multiple" id="fileSelect" />
-        </div>
-        <div class=hosts_file>
-            <h3>Select /etc/host file (optional, converts the lo0 addresses to hostnames)</h3>
-            <label for='fileSelect2'>Filename:</label>
-            <input type='file' name='input_files[]' multiple='multiple' id='fileSelect2' />
-            </br></br>
-        </div>
-        <div class=isis_text>
-            <input type=radio name='opt' value='show_v6'>Show V6 subnets? (takes more time to render)</br>
-            <input type=radio name='opt' value='no_subnets'>Only render routers (no subnets)
-            </br></br></br>
-        </div>
-        <div class=import_json_text>
-            </br></br>
-        </div>
-        <div class=common_text>
-            <input type=submit name=Submit1 value=Import /></br>
-        </div>
+    <div id=tabs class=tabs>
+      <ul>
+        <li><a class="ospf_tab" href="#ospf_tab">OSPF</a></li>
+        <li><a class="isis_tab" href="#isis_tab">ISIS</a></li>
+        <li><a class="ted_tab" href="#ted_tab">TED</a></li>
+        <li><a class="import_json_tab" href="#import_json_tab">IMPORT JSON</a></li>
+      </ul>
+      <div id="ospf_tab">
+          </br>Save the db to a file:</br>
+          <b>"show ospf database router extensive | display xml | no-more | save &ltfile&gt"</b>
+          </br></br>
+          <fieldset>
+              <legend>Select XML file</legend>
+              <div class=ospf_db_upload></div>
+              <input type="file" class="upload" name="db_file" />
+          </fieldset>
+          </br>
+          <fieldset>
+              <legend>Select /etc/hosts file (optional, converts lo0 ip to hostname)</legend>
+              <div class=ospf_host_upload></div>
+              <input type="file" class="upload" name="host_file" />
+          </fieldset>
+          </br></br>
+          <button type="button" id="submitBtn" class="submitBtn">Import</button>
+      </div>
+      <div id="isis_tab">
+          </br>Save the db to a file:</br>
+          <b>"show isis database extensive | display xml | no-more | save &ltfile&gt"</b>
+          </br></br>
+          <fieldset>
+              <legend>Select XML file</legend>
+              <div class=isis_db_upload></div>
+          </fieldset>
+          </br>
+          <fieldset>
+              <legend>Select Options</legend>
+              <label for="radio-1">Show V6 subnets?</label>
+              <input type="radio" name="opt" value='show_v6' id="radio-1">
+              <label for="radio-2">Only render routers (no subnets)</label>
+              <input type="radio" name="opt" value='no_subnets' id="radio-2">
+              </fieldset>
+          </br>
+          <button type="button" id="submitBtn" class="submitBtn">Import</button>
+      </div>
+      <div id="ted_tab">
+          </br>Save the db to a file:</br>
+          <b>"show ted database extensive | display xml | no-more | save &ltfile&gt"</b>
+          </br></br>
+          <fieldset>
+              <legend>Select XML file</legend>
+              <div class=ted_db_upload></div>
+          </fieldset>
+          </br>
+          <fieldset>
+              <legend>Select /etc/hosts file (optional, converts lo0 ip to hostname)</legend>
+              <div class=ted_host_upload></div>
+          </fieldset>
+          </br></br>
+          <button type="button" id="submitBtn" class="submitBtn">Import</button>
+      </div>
+      <div id="import_json_tab">
+          </br></br>
+          <fieldset>
+              <legend>Select XML file</legend>
+              <div class=import_json_db_upload></div>
+          </fieldset>
+          </br></br></br></br></br></br></br></br>
+          <button type="button" id="submitBtn" class="submitBtn">Import</button>
+      </div>
+    </div>
     </form>
 </div>
 </body>
