@@ -1301,14 +1301,17 @@ function _throw_error(txt) {
           </br></br>
           <fieldset>
               <legend>Select XML file</legend>
-              <div class=ospf_db_upload></div>
-              <input type="file" class="upload" name="db_file" />
+              <div class=ospf_db_upload>
+                  <input type="file" class="upload" name="db_file" />
+                  <input class="upload" type="hidden" name="ospf" value="True" />
+              </div>
           </fieldset>
           </br>
           <fieldset>
               <legend>Select /etc/hosts file (optional, converts lo0 ip to hostname)</legend>
-              <div class=ospf_host_upload></div>
-              <input type="file" class="upload" name="host_file" />
+              <div class=ospf_host_upload>
+                  <input type="file" class="upload" name="host_file" />
+              </div>
           </fieldset>
           </br></br>
           <button type="button" id="submitBtn" class="submitBtn">Import</button>
