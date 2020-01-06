@@ -12,25 +12,8 @@ Creates a force directed D3 graph based on the output from one of these JUNOS cl
 
 ### Recommended method is to use Docker:
 
-  * Create a directory /tmp/topoviz, and a file named Dockerfile within it. Paste this into the file:  
-
-```
-FROM ubuntu:latest
-MAINTAINER Juniper Networks
-ENV TZ=Etc/UTC
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends apache2 git make gcc php libc6-dev ca-certificates
-RUN PERL_MM_USE_DEFAULT=1 cpan install List::MoreUtils
-RUN sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 100M/' /etc/php/*/apache2/php.ini
-RUN sed -i 's/post_max_size = 8M/post_max_size = 100M/' /etc/php/*/apache2/php.ini
-RUN cd /var/www/html && git clone https://github.com/Juniper/topoviz.git
-RUN chown -R www-data:www-data /var/www/html/topoviz/*
-EXPOSE 80
-CMD apachectl -D FOREGROUND
-```
-
-  * Create the docker image using ```docker build /tmp/topoviz/ -t topoviz:v0.1```
+  * Clone the repo  
+  * Create the docker image using ```docker build topoviz/ -t topoviz:v0.1```
   * Run the docker image using ```docker run -itd -p 8080:80/tcp topoviz:v0.1```
   * Connect to host using http on  port 8080, example: http://localhost:8080/topoviz/  
 
