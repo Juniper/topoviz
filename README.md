@@ -47,7 +47,7 @@ This code was written in 2016 for JTAC, some customers have expressed an interes
 
 ## LICENSE
 
-Apache 2.0  
+MIT  
 
 ## CONTRIBUTORS
 
