@@ -15,13 +15,12 @@ Creates a force directed D3 graph based on the output from one of these JUNOS cl
   * Clone the repo  
   * Create the docker image using ```docker build topoviz/ -t topoviz:v0.1```
   * Run the docker image using ```docker run -itd -p 8080:80/tcp topoviz:v0.1```
-  * Connect to host using http on  port 8080, example: http://localhost:8080/topoviz/  
+  * Connect to host using http on port 8080, example: http://localhost:8080/topoviz/  
 
 ### Alternatively you could:
-  * Clone the repo onto a server running apache and php  
+  * Clone the repo onto a server running apache and the wsgi module
   * Ensure perl has List::MoreUtils installed  
-  * Update the php.ini so that post_max_size = 100M and upload_max_filesize = 100M, restart apache  
-  * Ensure the json directory is writeable by apache  
+  * Ensure the json directory is writeable by the apache user  
   
 
 ## USAGE

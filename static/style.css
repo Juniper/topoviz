@@ -82,7 +82,7 @@ body {
 }
 
 #content_wrapper {
-    height: calc(100% - 55px - 15px - 39px - 13px);
+    height: calc(100% - 55px - 14px - 39px - 13px);
     width: 100%;
 }
 
@@ -178,6 +178,10 @@ text {
     text-align: left;
     z-index: 11;
     transform: translate(-50%,-50%)
+}
+
+#input {
+    margin:0;
 }
 
 #tabs {

@@ -54,6 +54,7 @@ my $nodestr;
 my @nodestr;
 my $links;
 my @links;
+my @tmp_subnet;
 my $subnet;
 my $l1subnet;
 my $l2subnet;
@@ -71,6 +72,7 @@ my %linkseen;
 my $neighborflag;
 my $subnetflag;
 my @reachability;
+my @tmp_reachability;
 my $peer_lsp_id;
 my $ip_metric;
 my $my_ip;
@@ -117,7 +119,7 @@ my $l1updown;
 my $debug = 0;
 
 # read in the isis db
-# maybe should move away from this simple model to an actual xml parser?? 
+# maybe should move away from this simple model to an actual xml parser??
 
 while(<STDIN>) {
     $thisline = $_;
@@ -126,7 +128,7 @@ while(<STDIN>) {
     } elsif($thisline =~ '<isis-database>') {
         # start of level
         $new_level = 1;
-    } elsif($thisline =~ '<level>([1-2])' && $new_level eq 1){  
+    } elsif($thisline =~ '<level>([1-2])' && $new_level eq 1){
         # using this check as <level> appears in multiple places
         $level = $1;
     } elsif($thisline =~ '<isis-database-entry>') {
@@ -144,6 +146,7 @@ while(<STDIN>) {
         $lsp_id = $1;
         #push(@lspid, "$lsp_id") if ! $lspidseen {"$lsp_id $level"}++;
     } elsif($thisline =~ '<router-id>([0-9\.]+)' && $isisheader eq 1) {
+        # only found in 1st fragment
         $rid = $1;
     } elsif($thisline =~ '</isis-header>' && $isisheader eq 1) {
         $isisheader = 0;
@@ -163,7 +166,7 @@ while(<STDIN>) {
     } elsif($thisline =~ '<reachability-tlv heading="IS extended neighbor:"' && $tlvflag eq 1 ) {
         $neighborflag = 1;
         # this section only lists details of its adjacencies
-        # has lsp-id, local and far end IP's, (no mask though) 
+        # has lsp-id, local and far end IP's, (no mask though)
         # also <admin-group-name> which could be useful
     } elsif($thisline =~ '<address-prefix>([a-zA-Z0-9\.\:\-\_]+)' && $neighborflag eq 1) {
         $peer_lsp_id = $1;
@@ -178,17 +181,14 @@ while(<STDIN>) {
 #     } elsif($thisline =~ '<admin-group-name>([A-Za-z0-9\,\.\?\/\-\=\_\+\~\!\@\#\$\%\^\&\*\(\)]+)' && neighborflag eq 1) {
 #         $admin_group = $1;
      } elsif($thisline =~ '</reachability-tlv>' && $neighborflag eq 1) {
-        if ($advrouter ne $peer_lsp_id) {
-            push(@reachability, "$advrouter,$level,$my_ip,$peer_lsp_id,$peer_ip,$ip_metric") if ! $lspidseen {"$advrouter $level $my_ip $peer_lsp_id $peer_ip $ip_metric"}++;
-        }
+        push(@tmp_reachability, "$level,$my_ip,$peer_lsp_id,$peer_ip,$ip_metric");
         undef $peer_lsp_id;
         undef $ip_metric;
         undef $my_ip;
         undef $peer_ip;
 
         $neighborflag = 0;
-        # must know the hostname prior to collecting the subnet info, hence have to use the extended IP section
-    } elsif($thisline =~ '<ip-prefix-tlv' && $tlvflag eq 1) { 
+    } elsif ($thisline =~ '<ip-prefix-tlv' && $tlvflag eq 1) {
         $subnetflag = 1;
     } elsif ($thisline =~ '<address-prefix>([0-9\.]+/[0-9]+)' && $subnetflag eq 1) {
         $subnet = $1;
@@ -201,13 +201,11 @@ while(<STDIN>) {
             $subnetflag eq 0;
         } else {
             if ($ARGV[0] ne 'no_subnets') {
-                push(@subnet, "$subnet,$level,$metric,$advrouter,$updown") if ! $subnetseen {"$subnet $level $advrouter"}++;
+                push(@tmp_subnet, "$subnet,$level,$metric,$updown");
             }
-            
-
             $subnetflag eq 0;
         }
-    } elsif($thisline =~ '<ipv6-reachability-tlv' && $tlvflag eq 1) {
+    } elsif ($thisline =~ '<ipv6-reachability-tlv' && $tlvflag eq 1) {
         $subnetflag = 1;
     } elsif ($thisline =~ '<ipv6-address>([0-9\.a-f\:]+/[0-9]+)' && $subnetflag eq 1) {
         $subnet = $1;
@@ -216,9 +214,40 @@ while(<STDIN>) {
     } elsif ($thisline =~ '<prefix-downflag>([a-z]+)' && $subnetflag eq 1) { # need to verify what this looks like
         $updown = $1;
     } elsif ($thisline =~ '</ipv6-reachability-tlv>' && $subnetflag eq 1 && $ARGV[0] =~ 'show_v6' ) {
-        push(@subnet, "$subnet,$level,$metric,$advrouter,$updown") if ! $subnetseen {"$subnet $level $advrouter"}++;
-        $subnetflag eq 0;
-    } 
+        if ($subnet =~ '/128' && $metric != 0) {
+            $subnetflag eq 0;
+        } else {
+            push(@tmp_subnet, "$subnet,$level,$metric,$updown");
+            $subnetflag eq 0;
+        }
+    } elsif ($thisline =~ '</isis-database-entry>') {
+        foreach (@tmp_subnet) {
+            $subnet = ( split( /,/, $_ ) )[ 0 ];
+            $level = ( split( /,/, $_ ) )[ 1 ];
+            $metric = ( split( /,/, $_ ) )[ 2 ];
+            $updown = ( split( /,/, $_ ) )[ 3 ];
+            push(@subnet, "$subnet,$level,$metric,$advrouter,$updown") if ! $subnetseen {"$subnet $level $advrouter"}++;
+        }
+        undef @tmp_subnet;
+        undef $subnet;
+        undef $metric;
+        undef $updown;
+        foreach (@tmp_reachability) {
+            $level = ( split( /,/, $_ ) )[ 0 ];
+            $my_ip = ( split( /,/, $_ ) )[ 1 ];
+            $peer_lsp_id = ( split( /,/, $_ ) )[ 2 ];
+            $peer_ip = ( split( /,/, $_ ) )[ 3 ];
+            $ip_metric = ( split( /,/, $_ ) )[ 4 ];
+            if ($advrouter ne $peer_lsp_id) {
+                push(@reachability, "$advrouter,$level,$my_ip,$peer_lsp_id,$peer_ip,$ip_metric") if ! $lspidseen {"$advrouter $level $my_ip $peer_lsp_id $peer_ip $ip_metric"}++;
+            }
+        }
+        undef @tmp_reachability;
+        undef $my_ip;
+        undef $peer_lsp_id;
+        undef $peer_ip;
+        undef $ip_metric;
+    }
 }
 exit 254 if ! $xml;
 
@@ -278,8 +307,8 @@ foreach (@l1list) {
     undef @templ1l2list;
 
     # dont worry about /32's for drawing nodes/links
-    
-    if ("$l1subnet" !~ '/32' && "$l1subnet" !~ '/128') {
+
+    if ("$l1subnet" !~ '/32' && "$l1subnet" !~ '/128' && "$l1subnet" !~ "^::/") {
 
         # this array is just for printing subnets to the infobar
         # only do this if down bit not set
@@ -308,10 +337,10 @@ foreach (@l1list) {
         }
 
         # check if this is an L1/L2 subnet
-        
+
         if ( @templ1l2list ) {
 
-            # pull the L2 metric out 
+            # pull the L2 metric out
 
             $l2metric = ( split( /,/, @templ1l2list[0] ) ) [ 1];
 
@@ -323,13 +352,13 @@ foreach (@l1list) {
 
         } else {
 
-            # at this point we know there is no L2 subnet advertised by the same host. 
+            # at this point we know there is no L2 subnet advertised by the same host.
             # we now need to put check for scenario where this router is configured for L1 only
             # and peer router is set to L1/L2 AND this router is before the peer router in the xml file order.
-            # we can't print the subnet out at L1 only, because we'd end up with two nodes, one for L1 from 
-            # this node and a L1/L2 node from the peer router. 
+            # we can't print the subnet out at L1 only, because we'd end up with two nodes, one for L1 from
+            # this node and a L1/L2 node from the peer router.
 
-            # So, we must hold off creating the subnet node until all L2 and L1/L2 subnets are known, 
+            # So, we must hold off creating the subnet node until all L2 and L1/L2 subnets are known,
 
             # Create a link from this node to this subnet, as long as down bit not set indicating it came from L2
 
@@ -344,9 +373,9 @@ foreach (@l1list) {
 
     } else {
 
-        # 
+        #
         # L1 loopbacks, for these we want to present upon mouseover in the info panel
-        # 
+        #
 
         if ($l1updown ne "down") {
             push (@l1loopbacks, "$l1advrouter,$l1subnet") if ! $l1loopseen {"$l1advrouter $l1subnet"}++;
@@ -374,7 +403,7 @@ foreach (@l2list) {
 
     # dont worry about /32's for drawing nodes/links
 
-    if ("$l2subnet" !~ '/32' && "$l2subnet" !~ '/128') {
+    if ("$l2subnet" !~ '/32' && "$l2subnet" !~ '/128' && "$l2subnet" !~ "^::/") {
 
         # this array is just for printing subnets to the infobar
 
@@ -387,7 +416,7 @@ foreach (@l2list) {
             # grab the info from this index in the @subnet array
 
             $l1l2subnet = ( split( /,/, @subnet[$_] ) )[ 0 ];
-            $l1l2advrouter = ( split( /,/, @subnet[$_] ) )[ 3 ];        
+            $l1l2advrouter = ( split( /,/, @subnet[$_] ) )[ 3 ];
 
             # find out whether this subnet is already known as an L1/L2 subnet
 
@@ -398,7 +427,7 @@ foreach (@l2list) {
                 push(@l2eql1l2_diffhost, $_);
             }
         }
- 
+
         if ( @l2eql1l2_diffhost ) {
 
             # corner case where one end is L1/L2 and this end is L2 only
@@ -418,9 +447,9 @@ foreach (@l2list) {
 
     } else {
 
-        # 
+        #
         # L2 loopbacks
-        # 
+        #
 
         push (@l2loopbacks, "$l2advrouter,$l2subnet") if ! $l2loopseen {"$l2advrouter $l2subnet"}++;
 
@@ -432,7 +461,7 @@ foreach (@l2list) {
 
 # first check if there are any L2 or L1/L2 subnets in the array
 # If not just add the L1's
-# if yes, double check that the L1 subnet isn't present in the array 
+# if yes, double check that the L1 subnet isn't present in the array
 # reason for this is that 'none' will return false for an empty list
 
 if ( ! @subnetstr) {
@@ -443,7 +472,7 @@ if ( ! @subnetstr) {
 
     }
 
-} else { 
+} else {
 
     foreach(@l1only) {
 
@@ -453,7 +482,7 @@ if ( ! @subnetstr) {
 
             push(@subnetstr, "{\"name\":$_,\"level\":1,\"group\":11,\"id\":$nodes_id}") && $nodes_id++ if ! $nodeseen {"$_ 1"}++;
 
-        }    
+        }
 
     }
 
@@ -531,7 +560,7 @@ sub _ip2bin {
         }
         return '' if length($bin_ip) < 128;
     } else {
-        # IPV4 
+        # IPV4
         my @octets = split(/\./, $ip, -1);
         return '' if scalar @octets > 4;
         for my $octet (@octets) {
@@ -615,10 +644,10 @@ sub _create_r2r_link {
         my $subpeer_lsp_id = ( split( /,/, $subreachability[$subidx] ) )[3];
         $subpeer_lsp_id =~ s/\.[0-9a-f][0-9a-f]$//;
         my $submetric = ( split( /,/, $subreachability[$subidx] ) )[5];
-        if ($subip eq $submyip) {
-#            push(@links, "$subrtrname,$subrid,$sublevel,$subpeer_lsp_id,$submetric,$id") && $id++ if ! $linkseen {("$subadvrouter $subpeer_lsp_id") || ("$subpeer_lsp_id $subadvrouter")}++;
-            push(@links, "$subrtrname,$subrid,$sublevel,$subpeer_lsp_id,$submetric,$id") && $id++ if ! $linkseen {"$subadvrouter $subpeer_lsp_id"}++;
-        }
+    if ($subip eq $submyip) {
+            push(@links, "$subrtrname,$subrid,$sublevel,$subpeer_lsp_id,$submetric,$id") && $id++ if ! $linkseen {"$subpeer_lsp_id $subrtrname"}++;
+    }
+    push(@links, "$subrtrname,$subrid,$sublevel,$subpeer_lsp_id,$submetric,$id") && $id++ if ! $linkseen {"$subpeer_lsp_id $subrtrname"}++;
         $subloop_index --;
     }
 }
@@ -626,6 +655,12 @@ sub _create_r2r_link {
 ##########################
 # start of json creation #
 ##########################
+
+$nodestr = (scalar(@nodestr)-1);
+if ($nodestr == -1) {
+    print "{\n    \"nodes\":[\n    ],\n    \"links\":[\n    ]\n}\n";
+    exit;
+}
 
 print "{\n    \"nodes\":[\n";
 
@@ -637,8 +672,6 @@ print "{\n    \"nodes\":[\n";
 foreach (@subnetstr) {
     print "        $_,\n"
 }
-
-$nodestr = (scalar(@nodestr)-1);
 
 for ($loop_index = 0; $loop_index <= $nodestr; $loop_index++) {
 
@@ -731,26 +764,32 @@ for ($loop_index = 0; $loop_index <= $nodestr; $loop_index++) {
         @sorted_localips = sort @localips;
         $loop_index3 = (scalar(@sorted_localips)-1);
 
+    # in cases where there are no local ip's, see if there are adjacencies we can show
+    if ( ! @sorted_localips ) {
+        _create_r2r_link($rtrname,$rid,undef,\@reachidx,\@reachability);
+    }
+
         while ($loop_index3 > 0) {
             if (( ! @l1subnetidx ) && ( ! @l2subnetidx)) {
                 _create_r2r_link($rtrname,$rid,$sorted_localips[$loop_index3],\@reachidx,\@reachability);
-            }
-            my $retval = _is_ip_in_subnet($sorted_localips[$loop_index3],\@l1subnetidx,\@l1subnets_noloopbacks,\@l2subnetidx,\@l2subnets_noloopbacks);
-            if ($retval eq 'false') {
-                _create_r2r_link($rtrname,$rid,$sorted_localips[$loop_index3],\@reachidx,\@reachability);
+            } else {
+                my $retval = _is_ip_in_subnet($sorted_localips[$loop_index3],\@l1subnetidx,\@l1subnets_noloopbacks,\@l2subnetidx,\@l2subnets_noloopbacks);
+                if ($retval eq 'false') {
+                    _create_r2r_link($rtrname,$rid,$sorted_localips[$loop_index3],\@reachidx,\@reachability);
+                }
             }
             print "                {\"address\":\"$sorted_localips[$loop_index3]\"},\n";
             $loop_index3 --;
         }
 
         if ($loop_index3 eq 0) {
-
             if (( ! @l1subnetidx ) && ( ! @l2subnetidx)) {
                 _create_r2r_link($rtrname,$rid,$sorted_localips[$loop_index3],\@reachidx,\@reachability);
-            }
-            my $retval = _is_ip_in_subnet($sorted_localips[$loop_index3],\@l1subnetidx,\@l1subnets_noloopbacks,\@l2subnetidx,\@l2subnets_noloopbacks);
-            if ($retval eq 'false') {
-                _create_r2r_link($rtrname,$rid,$sorted_localips[$loop_index3],\@reachidx,\@reachability);
+            } else {
+                my $retval = _is_ip_in_subnet($sorted_localips[$loop_index3],\@l1subnetidx,\@l1subnets_noloopbacks,\@l2subnetidx,\@l2subnets_noloopbacks);
+                if ($retval eq 'false') {
+                    _create_r2r_link($rtrname,$rid,$sorted_localips[$loop_index3],\@reachidx,\@reachability);
+                }
             }
             print "                {\"address\":\"$sorted_localips[$loop_index3]\"}\n";
         }

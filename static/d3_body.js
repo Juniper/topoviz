@@ -1,93 +1,19 @@
-<!DOCTYPE html>
-
-<!--
-Copyright (c) 2019, Juniper Networks, Inc
-All rights reserved
-This SOFTWARE is licensed under the LICENSE provided in the
-./LICENCE file. By downloading, installing, copying, or otherwise
-using the SOFTWARE, you agree to be bound by the terms of that
-LICENSE.
-//-->
-
-<meta charset="utf-8">
-<head>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>TopoViz</title>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.0/themes/smoothness/jquery-ui.css">
-    <script src="https://d3js.org/d3.v3.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
-        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
-        crossorigin="anonymous">
-    </script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
-        integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
-        crossorigin="anonymous">
-    </script>
-    <link type="text/css" rel=stylesheet href="style.css"></link>
-    <script>
-    $(document).ready(function () {
-        $("button").button();
-        $(".submitBtn").click(function(){
-            $("#input").submit();
-        });
-        $( "input[type='radio']" ).checkboxradio();
-        $("#tabs").tabs({heightStyle: "auto"});
-        $(".ospf_tab").click(function () {
-            $('.upload').remove();
-            $('.ospf_db_upload').append(
-                $('<input/>').attr('class','upload').attr('type','file').attr('name','db_file'),
-                $('<input/>').attr('class','upload').attr('type','hidden').attr('name','ospf').attr('value','True'),
-            );
-            $('.ospf_host_upload').append(
-                $('<input/>').attr('class','upload').attr('type','file').attr('name','host_file')
-            );
-        });
-        $(".isis_tab").click(function () {
-            $('.upload').remove();
-            $('.isis_db_upload').append(
-                $('<input/>').attr('class','upload').attr('type','file').attr('name','db_file'),
-                $('<input/>').attr('class','upload').attr('type','hidden').attr('name','isis').attr('value','True'),
-            );
-            $('.isis_host_upload').append(
-                $('<input/>').attr('class','upload').attr('type','file').attr('name','host_file')
-            );
-        });
-        $(".ted_tab").click(function () {
-            $('.upload').remove();
-            $('.ted_db_upload').append(
-                $('<input/>').attr('class','upload').attr('type','file').attr('name','db_file'),
-                $('<input/>').attr('class','upload').attr('type','hidden').attr('name','ted').attr('value','True'),
-            );
-            $('.ted_host_upload').append(
-                $('<input/>').attr('class','upload').attr('type','file').attr('name','host_file')
-            );
-        });
-        $(".import_json_tab").click(function () {
-            $('.upload').remove();
-            $('.import_json_db_upload').append(
-                $('<input/>').attr('class','upload').attr('type','file').attr('name','db_file'),
-                $('<input/>').attr('class','upload').attr('type','hidden').attr('name','import_json').attr('value','True'),
-            );
-        });
-    });
-    </script>
-</head>
-<body>
-
-<script>
-
 var json;
 var proto;
 var args;
 var linkedbyindex;
 
 function _get_json(fh,proto,subnets) {
-    $.getJSON(fh).done(function(data) {
-        json = data;
-        proto = proto;
-        args = args;
-        _gettopo();
-    });
+    $.getJSON(fh)
+        .done(function(data) {
+            json = data;
+            proto = proto;
+            args = args;
+            _gettopo();
+        })
+        .fail(function(jqxhr, textStatus, error) {
+            _throw_error("getJSON returned: "+error);
+        })
 };
 
 function _gettopo() {
@@ -96,7 +22,11 @@ function _gettopo() {
 
     var node_count = json.nodes.length;
     console.log('node count is '+node_count);
-    if (node_count < 100) {
+    var link_count = json.links.length;
+    console.log('link count is '+link_count);
+    if (node_count === 0) {
+       _throw_error("no nodes found in the xml provided")
+    } else if (node_count < 100) {
         w = 1000;
         h = 1000;
     } else if (node_count < 250) {
@@ -157,17 +87,21 @@ function _gettopo() {
             randomY()
         ];});
 
+    var calcDistance = function(link){
+	    var l = (link.source.group == link.target.group) ? 60 : 30;
+        return l;
+    }
 
-    if(args == "no_subnets" ) {
+    if (proto === "isis") {
         var force = d3.layout.force()
+            .linkDistance(calcDistance)
             .charge(-300)
-            .linkDistance(60)
-            .size([w, h]);
+	    .size([w, h]);
     } else {
-        var force = d3.layout.force()
-            .charge(-100)
+	var force = d3.layout.force()
             .linkDistance(30)
-            .size([w, h]);
+            .charge(-100)
+	    .size([w, h]);
     }
 
     var drag = force.drag()
@@ -1067,301 +1001,3 @@ function _gettopo() {
     // end of gettopo function
 
 }
-
-
-function _throw_error(txt) {
-
-    // create a modal with the error string
-    alert('ERROR - '+txt);
-
-    // once user clicks ok, reload the page
-    window.location = 'index.php';
-
-}
-
-</script>
-<?php
-
-    // define vars before using them
-    $file = '';
-    $proto = '';
-    $dl = '';
-    $opt = '';
-    $showDivFlag = '';
-
-    // call out to js to create a modal with the error
-    function _error_out($errstr) {
-        echo "<script>var txt='$errstr'; _throw_error(txt)</script>";
-        exit;
-    }
-
-    if($_SERVER["REQUEST_METHOD"] == "POST"){
-        $showDivFlag = false;
-        if (isset($_POST['ospf'])) {
-            $proto = "ospf";
-        } elseif (isset($_POST['isis'])) {
-            $proto = "isis";
-            $opt = $_POST['opt'];
-        } elseif (isset($_POST['ted'])) {
-            $proto = "ted";
-        } elseif (isset($_POST['import_json'])) {
-            $proto = "import_json";
-        }
-        // Check if file was uploaded without errors
-       if(is_uploaded_file($_FILES["db_file"]["tmp_name"])) {
-           if ($_FILES["db_file"]["error"] == 0) {
-                $input_db_file = $_FILES["db_file"]["name"];
-                $tmpfile = $_FILES["db_file"]["tmp_name"];
-            } else {
-                _error_out("an error occurred during upload of xml file");
-            }
-            $t = time();
-            $file = "json/$input_db_file-$t";
-            $dl = "$input_db_file-$t";
-            if ($proto == 'ospf') {
-                $status = shell_exec("cat $tmpfile | perl d3-ospf-topo.pl > $file; echo $?" );
-                if($status == 254) {
-                    _error_out("Input file is not XML formatted");
-                }
-            } elseif ($proto == 'isis') {
-                $status = shell_exec("cat $tmpfile | perl d3-isis-topo.pl $opt > $file; echo $?");
-                if($status == 254) {
-                    _error_out("Input file is not XML formatted");
-                }
-            } elseif ($proto == 'ted') {
-                $status = shell_exec("cat $tmpfile | perl d3-ted-topo.pl > $file; echo $?" );
-                if($status == 254) {
-                    _error_out("Input file is not XML formatted");
-                }
-            } elseif ($proto == 'import_json') {
-                $fh = preg_replace('/\.json$/','',$input_db_file);
-                $dl = $fh;
-                $file = "json/$fh";
-                $status = shell_exec("cp $tmpfile $file; echo $?");
-                if($status == 0){
-                    $proto = shell_exec("grep -m1 '\"protocol\": \"' $file | sed -e 's/.*\": \"//' -e 's/\",//'");
-                    $proto = rtrim($proto);
-                    if(!($proto == ospf || $proto == isis || $proto == ted)) {
-                        _error_out("unable to determine protocol from input file");
-                    }
-                } else {
-                    _error_out("failed to copy json file to webserver");
-                }
-            }
-        } else {
-            _error_out("no xml input file found");
-        }
-
-        // Check if file was uploaded without errors
-        if(is_uploaded_file($_FILES["host_file"]["tmp_name"])) {
-            if ($_FILES["host_file"]["error"] == 0) {
-                $tmpfile = $_FILES["host_file"]["tmp_name"];
-            } else {
-                _error_out("an error occurred during upload of hosts file");
-            }
-            if ($proto == 'ospf') {
-                shell_exec("cat $tmpfile | perl host_replace_ospf.pl $file");
-            } elseif ($proto == 'ted') {
-                shell_exec("cat $tmpfile | perl /host_replace_ted.pl $file");
-            }
-        }
-    }
-
-    // json creation/transform completed, time to render
-    echo "<script>var file=\"$file\";var proto=\"$proto\";var args=\"$opt\";_get_json(file,proto,args);</script>";
-
-?>
-
-<header class="main-header">
-    <div id="hero3"> </div>  <!-- top logo -->
-    <div id="hero2"> </div>  <!-- pin blue to left -->
-    <div id="hero1"> </div> <!-- bottom is banner to right -->
-</header>
-
-<div id="breadcrumb" class="breadcrumb">
-</div>
-
-<div id="appheader" class="appheader">
-    <div id="appheadertitle" class="left">
-        <h1>( OSPF || ISIS || TED ) Topology Visualizer</h1>
-    </div>
-    <div class="clear"> </div>
-</div> <!-- app header -->
-
-<div class="seperator"></div>
-<div id=content_wrapper>
-
-    <!-- side bar div, used for setting attributes etc -->
-
-    <div id=sidebar class=left>
-        <h3>Info</h3>
-        <div id=infopanel><span>To zoom:</br><ul><li>mousewheel</li><li>pinch/expand</li><li>2 finger drag up/down</li></ul>Click on a router to:<ul><li>list its details in info pane</li></ul>Mouseover a router to:<ul><li>highlight connected nodes</li></ul>Drag any node to:<ul><li>fix its position</li></ul>Double click a fixed node to:<ul><li>release it</li></ul>Mouseover a link to:<ul><li>show its metric</li></ul></span></div>
-        <h3>Color Key</h3>
-        <div id=key>
-            <div id=ospf_key class=key <?php if ($proto == 'isis' || $proto == 'ted'){?>style="display:none"<?php } ?>>
-                <svg height=100% width=100%>
-                    <g>
-                        <circle cx="40" cy="40"  r="15" stroke="DarkBlue" stroke-width="2" fill="Blue" />
-                        <text class="keytext" x="50" y="40" dx="20" dy="5">Non ABR/Non ASBR</text>
-                        <circle cx="40" cy="90" r="15" stroke="DarkGreen" stroke-width="2" fill="Green" />
-                        <text class=keytext x="50" y="90" dx="20" dy="5">ABR</text>
-                        <circle cx="40" cy="140" r="15" stroke="DarkCyan" stroke-width="2" fill="CadetBlue" />
-                        <text class=keytext x="50" y="140" dx="20" dy="5">ASBR</text>
-                        <circle cx="40" cy="190" r="15" stroke="Indigo" stroke-width="2" fill="RebeccaPurple" />
-                        <text class=keytext x="50" y="190" dx="20" dy="5">ABR + ASBR</text>
-                        <circle cx="40" cy="240" r="15" stroke="#6091d2" stroke-width="2" fill="#aec7e8" />
-                        <text class=keytext x="50"y="240" dx="20" dy="5">P2P Segment (subnet + mask)</text>
-                        <circle cx="40" cy="290" r="15" stroke="#ff8533" stroke-width="2" fill="#ffc299" />
-                        <text class=keytext x="50"y="290" dx="20" dy="5">Bcast Segment (ip is DR)</text>
-                        <circle cx="40" cy="340" r="15" stroke="#33ff77" stroke-width="2" fill="#99ffbb" />
-                        <text class=keytext x="50"y="340" dx="20" dy="5">P2MP Segment</text>
-                    </g>
-                </svg>
-            </div>
-            <div id=isis_key class=key <?php if ($proto == 'ospf' || $proto == 'ted'){?>style="display:none"<?php } ?>>
-                <svg height=100% width=100%>
-                    <g>
-                        <circle cx="40" cy="40"  r="15" stroke="DarkCyan" stroke-width="2" fill="CadetBlue" />
-                        <text class="keytext" x="50" y="40" dx="20" dy="5">Level 1 Subnet</text>
-                        <circle cx="40" cy="90" r="15" stroke="DarkGreen" stroke-width="2" fill="Green" />
-                        <text class=keytext x="50" y="90" dx="20" dy="5">Level 2 Subnet</text>
-                        <circle cx="40" cy="140" r="15" stroke="Indigo" stroke-width="2" fill="RebeccaPurple" />
-                        <text class=keytext x="50" y="140" dx="20" dy="5">Level 1/2 Subnet</text>
-                        <circle cx="40" cy="190" r="15" stroke="DarkBlue" stroke-width="2" fill="Blue" />
-                        <text class=keytext x="50" y="190" dx="20" dy="5">ISIS nodes</text>
-                    </g>
-                </svg>
-            </div>
-            <div id=ted_key class=key <?php if ($proto == 'ospf' || $proto == 'isis'){?>style="display:none"<?php } ?>>
-                <svg height=100% width=100%>
-                    <g>
-                        <circle cx="40" cy="40"  r="15" stroke="DarkBlue" stroke-width="2" fill="Blue" />
-                        <text class="keytext" x="50" y="40" dx="20" dy="5">Router</text>
-                        <circle cx="40" cy="90" r="15" stroke="#6091d2" stroke-width="2" fill="#aec7e8" />
-                        <text class=keytext x="50"y="90" dx="20" dy="5">P2P Subnet</text>
-                        <circle cx="40" cy="140" r="15" stroke="#ff8533" stroke-width="2" fill="#ffc299" />
-                        <text class=keytext x="50"y="140" dx="20" dy="5">Bcast Subnet</text>
-                    </g>
-                </svg>
-            </div>
-        </div>
-        <h3>Search</h3>
-        <div id=search>
-            <span>Enter one of the following:</br>
-                <ul class=ul>
-                    <li>v4/v6 address</li>
-                    <li>subnet</li>
-                    <li>hostname</li>
-                </ul>
-                <input type="text" name="search_box" id="search_box"></br></br>
-            </span>
-            <button onclick="_gettopo._search()">Find</button>
-            </br></br>
-            exact text only - no wildcards</br>
-            no whitespace</br>
-            case sensitive</br>
-            ted only - no subnets</br>
-            subnet must specify mask</br>
-            subnet mask in cidr format</br>
-        </div>
-        <h3>Export JSON</h3>
-        <div id=download>
-            <button onclick="var file='<?php echo "$dl"?>';_gettopo._download(file)">Export</button>
-        </div>
-        <h3>Ingress LSP Trace</h3>
-        <div id=lsp_trace_div>
-            <div <?php if ($proto == 'ted'){?>style="display:none"<?php } ?>>
-            <span>Requires "show mpls lsp ingress detail name &lt;&gt;" output</br></br>
-                <textarea type="text" name="lsp_trace" id="lsp_trace"></textarea></br></br>
-                <button onclick="_gettopo._traceon()">Show</button>&nbsp&nbsp
-                <button onclick="_gettopo._traceoff()">Hide</button>
-            </span>
-            </br></br>
-            <span>Only works for v4 addresses currently</span>
-            </div>
-        </div>
-    </div>
-    <?php echo "<script>$( \"#sidebar\" ).accordion({heightStyle: \"fill\"});$( \"#sidebar\" ).accordion( \"refresh\" );</script>" ?>
-    <!-- div for the svg -->
-    <div id=svgcontainer class=left></div>
-</div>
-<div id="modal_overlay" class="modal_overlay" <?php if ($showDivFlag===false){?>style="display:none"<?php } ?>></div>
-<div id="modal" class="modal" <?php if ($showDivFlag===false){?>style="display:none"<?php } ?>>
-    <form action="index.php" method="POST" id="input" enctype="multipart/form-data">
-    <div id=tabs class=tabs>
-      <ul>
-        <li><a class="ospf_tab" href="#ospf_tab">OSPF</a></li>
-        <li><a class="isis_tab" href="#isis_tab">ISIS</a></li>
-        <li><a class="ted_tab" href="#ted_tab">TED</a></li>
-        <li><a class="import_json_tab" href="#import_json_tab">IMPORT JSON</a></li>
-      </ul>
-      <div id="ospf_tab">
-          </br>Save the db to a file:</br>
-          <b>"show ospf database router extensive | display xml | no-more | save &ltfile&gt"</b>
-          </br></br>
-          <fieldset>
-              <legend>Select XML file</legend>
-              <div class=ospf_db_upload>
-                  <input type="file" class="upload" name="db_file" />
-                  <input class="upload" type="hidden" name="ospf" value="True" />
-              </div>
-          </fieldset>
-          </br>
-          <fieldset>
-              <legend>Select /etc/hosts file (optional, converts lo0 ip to hostname)</legend>
-              <div class=ospf_host_upload>
-                  <input type="file" class="upload" name="host_file" />
-              </div>
-          </fieldset>
-          </br></br>
-          <button type="button" id="submitBtn" class="submitBtn">Import</button>
-      </div>
-      <div id="isis_tab">
-          </br>Save the db to a file:</br>
-          <b>"show isis database extensive | display xml | no-more | save &ltfile&gt"</b>
-          </br></br>
-          <fieldset>
-              <legend>Select XML file</legend>
-              <div class=isis_db_upload></div>
-          </fieldset>
-          </br>
-          <fieldset>
-              <legend>Select Options</legend>
-              <label for="radio-1">Show V6 subnets?</label>
-              <input type="radio" name="opt" value='show_v6' id="radio-1">
-              <label for="radio-2">Only render routers (no subnets)</label>
-              <input type="radio" name="opt" value='no_subnets' id="radio-2">
-              </fieldset>
-          </br>
-          <button type="button" id="submitBtn" class="submitBtn">Import</button>
-      </div>
-      <div id="ted_tab">
-          </br>Save the db to a file:</br>
-          <b>"show ted database extensive | display xml | no-more | save &ltfile&gt"</b>
-          </br></br>
-          <fieldset>
-              <legend>Select XML file</legend>
-              <div class=ted_db_upload></div>
-          </fieldset>
-          </br>
-          <fieldset>
-              <legend>Select /etc/hosts file (optional, converts lo0 ip to hostname)</legend>
-              <div class=ted_host_upload></div>
-          </fieldset>
-          </br></br>
-          <button type="button" id="submitBtn" class="submitBtn">Import</button>
-      </div>
-      <div id="import_json_tab">
-          </br></br>
-          <fieldset>
-              <legend>Select previously exported topoviz JSON file</legend>
-              <div class=import_json_db_upload></div>
-          </fieldset>
-          </br></br></br></br></br></br></br></br>
-          <button type="button" id="submitBtn" class="submitBtn">Import</button>
-      </div>
-    </div>
-    </form>
-</div>
-</body>
-</html>
