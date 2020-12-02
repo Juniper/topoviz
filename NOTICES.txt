@@ -1,0 +1,9 @@
+NOTICES FOR THIRD-PARTY CODE/DEPENDENCIES
+
+Name: D3
+Project URL: https://d3js.org/
+License: BSD 3-Clause "New" or "Revised" License
+
+Name: JQuery
+Project URL: https://jquery.com/
+License: MIT
