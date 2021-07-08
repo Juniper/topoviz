@@ -88,6 +88,10 @@ function _gettopo() {
         fill_4 = '#aec7e8',
         fill_5 = '#ffc299',
         fill_6 = '#b3e6b3',
+        fill_7 = 'Cornsilk',
+        fill_8 = 'DarkKhaki',
+        fill_9 = 'LightSalmon',
+        fill_10 = 'Pink',
         fill_11 = 'CadetBlue',
         fill_12 = 'Green',
         fill_13 = 'RebeccaPurple',
@@ -101,6 +105,10 @@ function _gettopo() {
         stroke_4 = '#6091d2',
         stroke_5 = '#ff8533',
         stroke_6 = '#66cc66',
+        stroke_7 = 'BurlyWood',
+        stroke_8 = 'DarkOliveGreen',
+        stroke_9 = 'DarkSalmon',
+        stroke_10 = 'Plum',
         stroke_11 = 'DarkCyan',
         stroke_12 = 'DarkGreen',
         stroke_13 = 'Indigo',
@@ -203,6 +211,14 @@ function _gettopo() {
                     return fill_5;
                 } else if (d.group == "6"){  /* ospf p2mp link */
                     return fill_6;
+                } else if (d.group == "7"){  /* ospf virtual link endpoint */
+                    return fill_7;
+                } else if (d.group == "8"){  /* ospf wild-card multicast receiver */
+                    return fill_8;
+                } else if (d.group == "9"){  /* ospf NSSA border router */
+                    return fill_9;
+                } else if (d.group == "10"){  /* ospf Non Transit router */
+                    return fill_10;
                 } else if (d.group == "11"){  /* isis L1 subnet */
                     return fill_11;
                 } else if (d.group == "12"){  /* isis L2 subnet */
@@ -233,6 +249,14 @@ function _gettopo() {
                     return stroke_5;
                 } else if (d.group == "6"){  /* ospf p2mp link*/
                     return stroke_6;
+                } else if (d.group == "7"){  /* ospf virtual link endpoint */
+                    return stroke_7;
+                } else if (d.group == "8"){  /* ospf wild-card multicast receiver */
+                    return stroke_8;
+                } else if (d.group == "9"){  /* ospf NSSA border router */
+                    return stroke_9;
+                } else if (d.group == "10"){  /* ospf Non Transit router */
+                    return stroke_10;
                 } else if (d.group == "11"){  /* isis L1 subnet */
                     return stroke_11;
                 } else if (d.group == "12"){  /* isis L2 subnet */
@@ -293,7 +317,9 @@ function _gettopo() {
 
         return function(d) {
             var connected = [d];
-            if(d.group == "0" || d.group == "1" || d.group == "2" || d.group == "3" || d.group == "20" || d.group == "30") {
+            if(d.group == "0" || d.group == "1" || d.group == "2" || d.group == "3" ||
+               d.group == "7" || d.group == "8" || d.group == "9" || d.group == "10" ||
+               d.group == "20" || d.group == "30") {
                 if(args == "no_subnets" ) {
                     node.each(function(o) { if(_isconnected(d, o)) { connected.push(d); } });
                 } else {
@@ -417,18 +443,27 @@ function _gettopo() {
                 var counter = local_l2subnets[i];
                 document.getElementById("infopanel").innerHTML+= "&nbsp&nbsp" + counter.subnet + "</br>";
             }
-        } else if ( d.group == "0" || d.group == "1" || d.group == "2" || d.group == "3") {
+        } else if ( d.group == "0" || d.group == "1" || d.group == "2" || d.group == "3" ||
+                   d.group == "7" || d.group == "8" || d.group == "9" || d.group == "10") {
             /* OSPF router details - write to info panel */
             document.getElementById("infopanel").innerHTML="<b>" + d.name + "</b></br></br>";
             document.getElementById("infopanel").innerHTML+= "<b>node type</b></br>";
             if ( d.group == "0") {
-                var node_type = "internal";
+                var node_type = "Internal";
             } else if ( d.group == "1") {
-                var node_type = "abr";
+                var node_type = "ABR";
             } else if ( d.group == "2") {
-                var node_type = "asbr";
+                var node_type = "ASBR";
             } else if ( d.group == "3") {
-                var node_type = "abr & asbr";
+                var node_type = "ABR & ASBR";
+            } else if ( d.group == "7") {
+                var node_type = "Virtual Link endpoint";
+            } else if ( d.group == "8") {
+                var node_type = "Wild-card multicast receiver";
+            } else if ( d.group == "9") {
+                var node_type = "NSSA border router";
+            } else if ( d.group == "10") {
+                var node_type = "Non Transit router";
             }
             document.getElementById("infopanel").innerHTML+= "&nbsp&nbsp" + node_type + "</br>";
             document.getElementById("infopanel").innerHTML+= "<b>router-id</b></br>";
@@ -546,13 +581,18 @@ function _gettopo() {
 
             for (var n = (json.nodes.length-1); n >= 0; n--) {
                 var router = json.nodes[n];
-                if (router.group !== 20 && router.group !== 30 && router.group > 3) {
+                if (router.group !== "0" && router.group !== "1" && router.group !== "2" &&
+                    router.group !== "3" && router.group !== "7" && router.group !== "8" &&
+                    router.group !== "9" && router.group !== "10" && router.group !== "20" &&
+                    router.group !== "30") {
                     // skip if not a ted, isis or ospf router node type
                     break;
                 } else if (router.name == "" + path_list[i] || router.router_id == "" + path_list[i]) {
                     router_array.push(router.index);
                     break;
-                } else if (router.group <= 3 ) {   // catches all ospf router types
+                } else if (router.group == "0" || router.group == "1" || router.group == "2" ||
+                           router.group == "3" || router.group == "7" || router.group == "8" ||
+                           router.group == "9" || router.group == "10") {   // catches all ospf router types
                     router_obj = router.p2mp_p2p_local_addresses;
                     for (var k = 0; k < router_obj.length; k++) {
                         if (router_obj[k].local_address == path_list[i]) {
@@ -574,7 +614,7 @@ function _gettopo() {
                             break;
                         }
                     }
-                } else if (router.group == 20) {
+                } else if (router.group == "20") {
                     router_obj = router.local_ips;
                     for (var k = 0; k < router_obj.length; k++) {
                         if (router_obj[k].address == path_list[i]) {
@@ -596,7 +636,7 @@ function _gettopo() {
                             break;
                         }
                     }
-                } else if (router.group == 30) {
+                } else if (router.group == "30") {
                     router_obj = router.links;
                     for (var k = 0; k < router_obj.length; k++) {
                         if (router_obj[k].local_address == path_list[i]) {
@@ -831,7 +871,9 @@ function _gettopo() {
             }
 
             // ospf only
-            if (counter.group == 0 || counter.group == 1 || counter.group == 2 || counter.group == 3) {
+            if (counter.group == "0" || counter.group == "1" || counter.group == "2" ||
+                counter.group == "3" || counter.group == "7" || counter.group == "8" || 
+                counter.group == "9" || counter.group == "10") {
 
                 counter2 = counter.loopbacks;
                 for (var k = 0; k < counter2.length; k++) {
@@ -898,7 +940,7 @@ function _gettopo() {
                 }
 
             // isis only
-            } else if (counter.group == 20) {
+            } else if (counter.group == "20") {
 
                 counter2 = counter.l1loopbacks;
                 for (var k = 0; k < counter2.length; k++) {
@@ -947,7 +989,7 @@ function _gettopo() {
                         return;
                     }
                 }
-            } else if (counter.group == 30) {
+            } else if (counter.group == "30") {
 
                 counter2 = counter.links;
                 for (var k = 0; k < counter2.length; k++) {

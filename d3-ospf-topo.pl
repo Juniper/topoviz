@@ -128,6 +128,14 @@ while(<STDIN>) {
             push(@nodestr, "{\"name\":\"$advrouter\",\"group\":2") if ! $nodeseen {"$advrouter"}++;
         } elsif($1 eq '3') { # ABR and ASBR router
             push(@nodestr, "{\"name\":\"$advrouter\",\"group\":3")  if ! $nodeseen {"$advrouter"}++;
+        } elsif($1 eq '4') { # Virtual Link endpoint
+            push(@nodestr, "{\"name\":\"$advrouter\",\"group\":7")  if ! $nodeseen {"$advrouter"}++;
+        } elsif($1 eq '8') { # wild-card multicast receiver
+            push(@nodestr, "{\"name\":\"$advrouter\",\"group\":8")  if ! $nodeseen {"$advrouter"}++;
+        } elsif($1 eq '10') { # NSSA border router
+            push(@nodestr, "{\"name\":\"$advrouter\",\"group\":9") if ! $nodeseen {"$advrouter"}++;
+        } elsif($1 eq '80') { # Non Transit router
+            push(@nodestr, "{\"name\":\"$advrouter\",\"group\":10") if ! $nodeseen {"$advrouter"}++;
         }
 
     } elsif ($thisline =~ '<ospf-link>' && $router_lsa eq 1) {
