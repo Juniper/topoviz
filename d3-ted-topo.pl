@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# Version 0.1
+# Version 0.2
 #
 # Copyright (c) Juniper Networks, Inc., 2019-2020. All rights reserved.
 #
@@ -47,11 +47,14 @@ my $remote;
 my $type;
 my $local_ifindex;
 my $admin_groups;
+my $extended_admin_groups;
 my $groups;
+my $exagroups;
 my $loop_index;
 my $loop_index2;
 my @nodestr;
 my @agroups;
+my @exagroups;
 my $metric;
 my $static_bw;
 my @links;
@@ -146,6 +149,12 @@ while(<STDIN>) {
         push(@agroups, $1)
     } elsif ($_ =~ '</admin-groups>' && defined $admin_groups) {
         undef $admin_groups;
+    } elsif ($_ =~ '<ted-link-extended-admin-group heading'  && defined $new_link_entry) {
+        $extended_admin_groups = 1;
+    } elsif ($_ =~ '<admin-group-name>([A-Za-z0-9\.\-]+)' && defined $extended_admin_groups) {
+        push(@exagroups, $1)
+    } elsif ($_ =~ '</ted-link-extended-admin-group>' && defined $extended_admin_groups) {
+        undef $extended_admin_groups;
     } elsif ($_ =~ '<ted-link-metric>([0-9]+)' && defined $new_link_entry) {
         $metric = $1;
     } elsif ($_ =~ '<ted-link-static-bandwidth>([0-9a-zA-Z\.]+)' && defined $new_link_entry) {
@@ -158,7 +167,7 @@ while(<STDIN>) {
             if ($remote ne "0.0.0.0") {
                 # is a P2P link, we can strip off fragment id now
                 $to =~ s/\.[0-9a-f]+$//;
-                push(@links2,"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;@agroups")  if ! $subnetseen {"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;@agroups"}++;
+                push(@links2,"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;@agroups;@exagroups")  if ! $subnetseen {"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;@agroups;@exagroups"}++;
             } elsif ($remote eq "0.0.0.0" && $local_ifindex eq 0) {
                 # passive link in IS-IS
                 push(@links3,"$id;$to;$local;$metric;$static_bw")  if ! $subnetseen {"$id;$to;$local;$metric;$static_bw"}++;
@@ -172,7 +181,7 @@ while(<STDIN>) {
                 push(@links3,"$id;$to;$local;$metric;$static_bw")  if ! $subnetseen {"$id;$to;$local;$metric;$static_bw"}++;
             } else {
                 # is a P2P link
-                push(@links2,"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;@agroups")  if ! $subnetseen {"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;@agroups"}++;
+                push(@links2,"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;@agroups;@exagroups")  if ! $subnetseen {"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;@agroups;@exagroups"}++;
             }
         }
         $linkstr = "            {\"to\":\"$to\",\"local_address\":\"$local\",\"remote_address\":\"$remote\",\"local_ifindex\":\"$local_ifindex\",\"link_metric\":\"$metric\",\"static_bw\":\"$static_bw\"";
@@ -184,13 +193,24 @@ while(<STDIN>) {
                 if($loop_index < $groups) {
                     $linkstr = $linkstr . "$agroups[$loop_index],";
                 } else {
-                    $linkstr = $linkstr . "$agroups[$loop_index]\"}";
+                    $linkstr = $linkstr . "$agroups[$loop_index]\"";
                 }
             }
             undef @agroups;
-        } else {
-            $linkstr = $linkstr . "}";
         }
+        if (@exagroups) {
+            $linkstr = $linkstr . ",\"link_extended_admin_groups\":\"";
+            $exagroups = (scalar(@exagroups)-1);
+            for ($loop_index = 0; $loop_index <= $exagroups; $loop_index++) {
+                if($loop_index < $exagroups) {
+                    $linkstr = $linkstr . "$exagroups[$loop_index],";
+                } else {
+                    $linkstr = $linkstr . "$exagroups[$loop_index]\"";
+                }
+            }
+            undef @exagroups;
+        }
+        $linkstr = $linkstr . "}";
         push (@links,"$id;$linkstr") if ! $linkseen {"$id;$linkstr"}++;
         undef $linkstr;
     } elsif ($_ =~ '</ted-database>' && $new_ted_entry) {

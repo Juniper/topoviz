@@ -518,10 +518,12 @@ function _gettopo() {
                 document.getElementById("infopanel").innerHTML+= "&nbsp&nbsp" + "metric: " + counter.link_metric + "</br>";
                 document.getElementById("infopanel").innerHTML+= "&nbsp&nbsp" + "bw: " + counter.static_bw + "</br>";
                 if( counter.admin_groups ) {
-                    document.getElementById("infopanel").innerHTML+= "&nbsp&nbsp" + "groups: " + counter.admin_groups + "</br></br>";
-                } else {
-                    document.getElementById("infopanel").innerHTML+= "</br>";
+                    document.getElementById("infopanel").innerHTML+= "&nbsp&nbsp" + "groups: " + counter.admin_groups + "</br>";
                 }
+                if( counter.link_extended_admin_groups ) {
+                    document.getElementById("infopanel").innerHTML+= "&nbsp&nbsp" + "ext_groups: " + counter.link_extended_admin_groups + "</br>";
+                }
+                document.getElementById("infopanel").innerHTML+= "</br></br>";
             }
         }
     }
