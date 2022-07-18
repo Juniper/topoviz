@@ -40,6 +40,7 @@ import subprocess
 cgitb.enable()
 
 header = """
+<!DOCTYPE html>
 <html xmlns='http://www.w3.org/1999/xhtml'>
     <head>
         <meta http-equiv='X-UA-Compatible' content='IE=edge'; charset='UTF-8'>

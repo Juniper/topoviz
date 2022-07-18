@@ -313,6 +313,44 @@ function _gettopo() {
            .attr("y", function(d) { return (d.source.y + d.target.y)/2; });
     });
 
+    if (proto === "ted") {
+        json.nodes.forEach(_find_ted_subnet_nodes);
+    };
+
+    function _find_ted_subnet_nodes(item) {
+        if (item.group != "31") {
+            return;
+        }
+        subnet_id = item.id;
+        connected_nodes = [];
+        json.links.forEach(_find_attached_links);
+        if (connected_nodes.length < 2) {
+            return;
+        }
+        if (connected_nodes[0].admin_groups != connected_nodes[1].admin_groups) {
+            var subnet_node = d3.select(".circle_" + item.id);
+            subnet_node.attr("class", "circle_" + item.id + ", blink_me");
+            subnet_node.style("fill", "red");
+            var text_node = d3.select(".circletext_" + item.id);
+            var text_label = text_node[0][0].innerHTML
+            text_node[0][0].innerHTML = text_label + ", Mismatched admin groups!";
+        }
+        if (connected_nodes[0].extended_admin_groups != connected_nodes[1].extended_admin_groups) {
+            var subnet_node = d3.select(".circle_" + item.id);
+            subnet_node.attr("class", "circle_" + item.id + ", blink_me");
+            subnet_node.style("fill", "red");
+            var text_node = d3.select(".circletext_" + item.id);
+            var text_label = text_node[0][0].innerHTML
+            text_node[0][0].innerHTML = text_label + ", Mismatched link extended admin groups!";
+        }
+    }
+
+    function _find_attached_links(item) {
+        if (item.target.index == subnet_id) {
+            connected_nodes.push(item);
+        }
+    }
+
     function _fade(opacity) {
 
         return function(d) {
@@ -520,8 +558,8 @@ function _gettopo() {
                 if( counter.admin_groups ) {
                     document.getElementById("infopanel").innerHTML+= "&nbsp&nbsp" + "groups: " + counter.admin_groups + "</br>";
                 }
-                if( counter.link_extended_admin_groups ) {
-                    document.getElementById("infopanel").innerHTML+= "&nbsp&nbsp" + "ext_groups: " + counter.link_extended_admin_groups + "</br>";
+                if( counter.extended_admin_groups ) {
+                    document.getElementById("infopanel").innerHTML+= "&nbsp&nbsp" + "ext_groups: " + counter.extended_admin_groups + "</br>";
                 }
                 document.getElementById("infopanel").innerHTML+= "</br></br>";
             }
@@ -874,7 +912,7 @@ function _gettopo() {
 
             // ospf only
             if (counter.group == "0" || counter.group == "1" || counter.group == "2" ||
-                counter.group == "3" || counter.group == "7" || counter.group == "8" || 
+                counter.group == "3" || counter.group == "7" || counter.group == "8" ||
                 counter.group == "9" || counter.group == "10") {
 
                 counter2 = counter.loopbacks;
@@ -1047,6 +1085,8 @@ function _gettopo() {
                                      'target_address': json.links[i].target_address,
                                      'metric': json.links[i].metric,
                                      'bw': json.links[i].bw,
+                                     'admin_groups': json.links[i].admin_groups,
+                                     'extended_admin_groups': json.links[i].extended_admin_groups,
                                      'id': json.links[i].id });
             }
         }

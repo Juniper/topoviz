@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# Version 0.2
+# Version 0.3
 #
 # Copyright (c) Juniper Networks, Inc., 2019-2020. All rights reserved.
 #
@@ -30,7 +30,7 @@
 # as noted in the Third-Party source code file.
 #
 #
-# This script takes the output of 'show ted database extensive | display xml | no-more' 
+# This script takes the output of 'show ted database extensive | display xml | no-more'
 # as input, and creates a json file that lists the nodes and links and their connectivity
 # This json is then parsed by d3.js to display the graph
 #
@@ -53,6 +53,7 @@ my $exagroups;
 my $loop_index;
 my $loop_index2;
 my @nodestr;
+my $nodestr;
 my @agroups;
 my @exagroups;
 my $metric;
@@ -67,7 +68,6 @@ my $link_count;
 my $linkstr_count;
 my $idx;
 my @nodes;
-my $nodestr;
 my $node_count;
 my $dst;
 my $dst_index;
@@ -118,7 +118,7 @@ while(<STDIN>) {
             undef $net;
             undef $new_ted_entry;
         } elsif (defined $net) {
-            # if it gets here is a broadcast network 
+            # if it gets here is a broadcast network
             push (@subnets,"    {\"name\":\"$id\",\"group\":\"5\",\"id\":\"$node_id\"},") if ! $subnetseen {"$id"}++;
             $node_id++;
             undef $net;
@@ -162,12 +162,35 @@ while(<STDIN>) {
     } elsif ($_ =~ '</ted-link>' && defined $new_link_entry) {
         undef $new_link_entry;
 
+        if (@agroups) {
+            $groups = (scalar(@agroups)-1);
+            for ($loop_index = 0; $loop_index <= $groups; $loop_index++) {
+                if($loop_index < $groups) {
+                    $admin_groups = $admin_groups . "$agroups[$loop_index], ";
+                } else {
+                    $admin_groups = $admin_groups . "$agroups[$loop_index]";
+                }
+            }
+            undef @agroups;
+        }
+        if (@exagroups) {
+            $exagroups = (scalar(@exagroups)-1);
+            for ($loop_index = 0; $loop_index <= $exagroups; $loop_index++) {
+                if($loop_index < $exagroups) {
+                    $extended_admin_groups = $extended_admin_groups . "$exagroups[$loop_index], ";
+                } else {
+                    $extended_admin_groups = $extended_admin_groups . "$exagroups[$loop_index]";
+                }
+            }
+            undef @exagroups;
+        }
+
         # split this into ISIS and OSPF sections
         if ($proto =~ m/IS-IS/) {
             if ($remote ne "0.0.0.0") {
                 # is a P2P link, we can strip off fragment id now
                 $to =~ s/\.[0-9a-f]+$//;
-                push(@links2,"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;@agroups;@exagroups")  if ! $subnetseen {"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;@agroups;@exagroups"}++;
+                push(@links2,"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;$admin_groups;$extended_admin_groups")  if ! $subnetseen {"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;$admin_groups;$extended_admin_groups"}++;
             } elsif ($remote eq "0.0.0.0" && $local_ifindex eq 0) {
                 # passive link in IS-IS
                 push(@links3,"$id;$to;$local;$metric;$static_bw")  if ! $subnetseen {"$id;$to;$local;$metric;$static_bw"}++;
@@ -181,38 +204,15 @@ while(<STDIN>) {
                 push(@links3,"$id;$to;$local;$metric;$static_bw")  if ! $subnetseen {"$id;$to;$local;$metric;$static_bw"}++;
             } else {
                 # is a P2P link
-                push(@links2,"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;@agroups;@exagroups")  if ! $subnetseen {"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;@agroups;@exagroups"}++;
+                push(@links2,"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;$admin_groups;$extended_admin_groups")  if ! $subnetseen {"$id;$to;$local;$remote;$local_ifindex;$metric;$static_bw;$admin_groups;$extended_admin_groups"}++;
             }
         }
-        $linkstr = "            {\"to\":\"$to\",\"local_address\":\"$local\",\"remote_address\":\"$remote\",\"local_ifindex\":\"$local_ifindex\",\"link_metric\":\"$metric\",\"static_bw\":\"$static_bw\"";
+        $linkstr = "            {\"to\":\"$to\",\"local_address\":\"$local\",\"remote_address\":\"$remote\",\"local_ifindex\":\"$local_ifindex\",\"link_metric\":\"$metric\",\"static_bw\":\"$static_bw\",\"admin_groups\":\"$admin_groups\",\"extended_admin_groups\":\"$extended_admin_groups\"}";
 
-        if (@agroups) {
-            $linkstr = $linkstr . ",\"admin_groups\":\"";
-            $groups = (scalar(@agroups)-1);
-            for ($loop_index = 0; $loop_index <= $groups; $loop_index++) {
-                if($loop_index < $groups) {
-                    $linkstr = $linkstr . "$agroups[$loop_index],";
-                } else {
-                    $linkstr = $linkstr . "$agroups[$loop_index]\"";
-                }
-            }
-            undef @agroups;
-        }
-        if (@exagroups) {
-            $linkstr = $linkstr . ",\"link_extended_admin_groups\":\"";
-            $exagroups = (scalar(@exagroups)-1);
-            for ($loop_index = 0; $loop_index <= $exagroups; $loop_index++) {
-                if($loop_index < $exagroups) {
-                    $linkstr = $linkstr . "$exagroups[$loop_index],";
-                } else {
-                    $linkstr = $linkstr . "$exagroups[$loop_index]\"";
-                }
-            }
-            undef @exagroups;
-        }
-        $linkstr = $linkstr . "}";
         push (@links,"$id;$linkstr") if ! $linkseen {"$id;$linkstr"}++;
         undef $linkstr;
+        undef $admin_groups;
+        undef $extended_admin_groups;
     } elsif ($_ =~ '</ted-database>' && $new_ted_entry) {
         undef $new_ted_entry;
     }
@@ -270,7 +270,6 @@ for ($loop_index = 0; $loop_index <= $link_count; $loop_index++) {
     $static_bw = ( split( /;/, $links3[$loop_index] ) )[4];
     $proto = ( split( /;/, $links3[$loop_index] ) )[5];
 
-#    if(defined $dst_index) {
     if(defined $dst_index && $dst_index > -1) {
         push (@linkstr,"    {\"source\":;$src;,\"target\":$dst_index,\"source_address\":\"$saddr\",\"metric\":$metric,\"bw\":\"$static_bw\",\"id\":$link_id}");
         $link_id++;
@@ -282,7 +281,6 @@ for ($loop_index = 0; $loop_index <= $link_count; $loop_index++) {
         $node_id++;
     }
 }
-
 # get unique list of links
 $link_count = (scalar(@links2)-1);
 for ($loop_index = 0; $loop_index <= $link_count; $loop_index++) {
@@ -294,33 +292,35 @@ for ($loop_index = 0; $loop_index <= $link_count; $loop_index++) {
     $daddr = ( split( /;/, $links2[$loop_index] ) )[3];
     $metric = ( split( /;/, $links2[$loop_index] ) )[5];
     $static_bw = ( split( /;/, $links2[$loop_index] ) )[6];
+    $admin_groups = ( split( /;/, $links2[$loop_index] ) )[7];
+    $extended_admin_groups = ( split( /;/, $links2[$loop_index] ) )[8];
 
     if (@inv) {
         # array must exist or 'none' returns null
         if( none { /$dst_index $src_index $daddr $saddr/ } @inv) {
             push (@inv,"$src_index $dst_index $saddr $daddr");
             push (@subnets,"    {\"name\":\"$src\($saddr\)<->$dst\($daddr\)\",\"group\":\"31\",\"id\":\"$node_id\"},");
-            push (@linkstr,"    {\"source\":;$src;,\"target\":$node_id,\"source_address\":\"$saddr\",\"target_address\":\"$daddr\",\"metric\":$metric,\"bw\":\"$static_bw\",\"id\":$link_id}");
+            push (@linkstr,"    {\"source\":;$src;,\"target\":$node_id,\"source_address\":\"$saddr\",\"target_address\":\"$daddr\",\"metric\":$metric,\"bw\":\"$static_bw\",\"admin_groups\":\"$admin_groups\",\"extended_admin_groups\":\"$extended_admin_groups\",\"id\":$link_id}");
             $link_id++;
             $node_id++;
         } else {
             $subnet_index = first_index { /$dst\($daddr\)<->$src\($saddr\)/ } @subnets;
-            push (@linkstr,"    {\"source\":;$src;,\"target\":$subnet_index,\"source_address\":\"$saddr\",\"target_address\":\"$daddr\",\"metric\":$metric,\"bw\":\"$static_bw\",\"id\":$link_id}");
+            push (@linkstr,"    {\"source\":;$src;,\"target\":$subnet_index,\"source_address\":\"$saddr\",\"target_address\":\"$daddr\",\"metric\":$metric,\"bw\":\"$static_bw\",\"admin_groups\":\"$admin_groups\",\"extended_admin_groups\":\"$extended_admin_groups\",\"id\":$link_id}");
             $link_id++;
         }
     } else {
         push (@inv,"$src_index $dst_index $saddr $daddr");
         push (@subnets,"    {\"name\":\"$src($saddr)<->$dst($daddr)\",\"group\":\"31\",\"id\":\"$node_id\"},");
-        push (@linkstr,"    {\"source\":;$src;,\"target\":$node_id,\"source_address\":\"$saddr\",\"target_address\":\"$daddr\",\"metric\":$metric,\"bw\":\"$static_bw\",\"id\":$link_id}");
+        push (@linkstr,"    {\"source\":;$src;,\"target\":$node_id,\"source_address\":\"$saddr\",\"target_address\":\"$daddr\",\"metric\":$metric,\"bw\":\"$static_bw\",\"admin_groups\":\"$admin_groups\",\"extended_admin_groups\":\"$extended_admin_groups\",\"id\":$link_id}");
         $link_id++;
         $node_id++;
     }
-
+    undef $admin_groups;
+    undef $extended_admin_groups;
 }
 undef @inv;
 
 # print the subnets first so they are rendered via svg with lower z-axis (appear underneath evething else)
-
 foreach(@subnets) {
     print "$_\n";
 }
@@ -388,7 +388,7 @@ for ($loop_index = 0; $loop_index <= $linkstr_count; $loop_index++) {
     }
 }
 
-if(@links){    
+if(@links){
     # close out the json
     print "  ]\n}\n";
 }
