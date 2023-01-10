@@ -394,7 +394,7 @@ def main():
         elif form.getvalue("import_json"):
             json_file = form["db_file"]
             filepath, dl, proto = process_json(json_file, tmpfile)
-            key = f"{proto}_key"
+            key = eval(f"{proto}_key")
             if proto == "ted":
                 lsp_trace = "" 
 
